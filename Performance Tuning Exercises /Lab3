@@ -1,0 +1,382 @@
+Performance Tuning Exercises
+Prerequisites
+Basic understanding of Apache Spark architecture (RDD, DataFrame, transformations, actions)
+Familiarity with PySpark or Scala Spark API
+Linux command-line proficiency
+Python 3.x knowledge
+Understanding of distributed computing concepts
+Learning Objectives
+By completing this lab, you will:
+
+Optimize Spark job performance through partition tuning
+Implement caching strategies for iterative computations
+Benchmark and compare performance metrics across different configurations
+Analyze Spark UI to identify bottlenecks
+Environment Setup
+Install Required Software
+Update system packages:
+sudo apt update
+Install Java (required for Spark):
+sudo apt install -y openjdk-11-jdk
+java -version
+Install Python and pip:
+sudo apt install -y python3 python3-pip
+Install Apache Spark:
+cd ~
+wget https://archive.apache.org/dist/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz
+tar -xzf spark-3.4.1-bin-hadoop3.tgz
+sudo mv spark-3.4.1-bin-hadoop3 /opt/spark
+Set environment variables:
+echo 'export SPARK_HOME=/opt/spark' >> ~/.bashrc
+echo 'export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin' >> ~/.bashrc
+echo 'export PYSPARK_PYTHON=python3' >> ~/.bashrc
+source ~/.bashrc
+Install PySpark:
+pip3 install pyspark==3.4.1
+Verify installation:
+pyspark --version
+Task 1: Partition Optimization
+Overview
+Partitioning controls data distribution across executors. Too few partitions underutilize resources; too many create overhead.
+
+Step 1: Create Sample Dataset
+Create a Python script to generate test data:
+
+mkdir -p ~/spark-performance-lab
+cd ~/spark-performance-lab
+nano generate_data.py
+Add the following code:
+
+import random
+import json
+
+def generate_sales_data(num_records):
+    """
+    Generate sample sales data for performance testing.
+    
+    Args:
+        num_records: Number of records to generate
+    """
+    categories = ['Electronics', 'Clothing', 'Food', 'Books', 'Toys']
+    regions = ['North', 'South', 'East', 'West', 'Central']
+    
+    with open('sales_data.json', 'w') as f:
+        for i in range(num_records):
+            record = {
+                'transaction_id': i,
+                'category': random.choice(categories),
+                'region': random.choice(regions),
+                'amount': round(random.uniform(10, 1000), 2),
+                'quantity': random.randint(1, 50)
+            }
+            f.write(json.dumps(record) + '\n')
+
+if __name__ == '__main__':
+    generate_sales_data(1000000)  # 1 million records
+    print("Data generation complete!")
+Run the script:
+
+python3 generate_data.py
+Step 2: Implement Partition Tuning Script
+Create the performance tuning script:
+
+nano partition_tuning.py
+Add this template (students complete TODO sections):
+
+from pyspark.sql import SparkSession
+import time
+
+def create_spark_session(app_name):
+    """Create and return a Spark session."""
+    return SparkSession.builder \
+        .appName(app_name) \
+        .master("local[*]") \
+        .getOrCreate()
+
+def benchmark_partitions(spark, input_file, num_partitions):
+    """
+    Benchmark Spark job with specified partition count.
+    
+    Args:
+        spark: SparkSession object
+        input_file: Path to input data
+        num_partitions: Number of partitions to use
+    
+    Returns:
+        Execution time in seconds
+    """
+    start_time = time.time()
+    
+    # TODO: Read JSON data
+    df = # Read the JSON file
+    
+    # TODO: Repartition the DataFrame
+    df_repartitioned = # Apply repartition with num_partitions
+    
+    # TODO: Perform aggregation (sum of amount by category and region)
+    result = # Group by category and region, sum the amount
+    
+    # TODO: Trigger action to execute the job
+    # Collect or count the results
+    
+    end_time = time.time()
+    return end_time - start_time
+
+def main():
+    spark = create_spark_session("Partition Tuning")
+    input_file = "sales_data.json"
+    
+    # Test different partition counts
+    partition_counts = [2, 4, 8, 16, 32]
+    
+    print("Partition Count | Execution Time (s)")
+    print("-" * 40)
+    
+    for num_parts in partition_counts:
+        # TODO: Call benchmark_partitions and print results
+        exec_time = # Call the benchmark function
+        print(f"{num_parts:15} | {exec_time:.2f}")
+    
+    spark.stop()
+
+if __name__ == '__main__':
+    main()
+Student Task: Complete the TODO sections to:
+
+Read JSON data using spark.read.json()
+Repartition using .repartition(num_partitions)
+Perform groupBy aggregation
+Trigger execution with .count() or .show()
+Step 3: Run and Analyze
+python3 partition_tuning.py
+Analysis Questions:
+
+Which partition count performed best?
+What happens with too few or too many partitions?
+How does this relate to your CPU core count?
+Task 2: Caching Strategies
+Overview
+Caching stores intermediate results in memory for reuse, critical for iterative algorithms.
+
+Step 1: Create Iterative Computation Script
+nano caching_benchmark.py
+Add this template:
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, avg, sum as _sum
+import time
+
+def create_spark_session():
+    return SparkSession.builder \
+        .appName("Caching Benchmark") \
+        .master("local[*]") \
+        .config("spark.driver.memory", "2g") \
+        .getOrCreate()
+
+def run_without_cache(spark, input_file):
+    """
+    Run iterative operations WITHOUT caching.
+    
+    Args:
+        spark: SparkSession
+        input_file: Path to data
+    
+    Returns:
+        Execution time in seconds
+    """
+    start_time = time.time()
+    
+    # TODO: Read the data
+    df = 
+    
+    # Simulate iterative operations (3 iterations)
+    for i in range(3):
+        # TODO: Perform aggregation - average amount by category
+        result1 = 
+        
+        # TODO: Perform another aggregation - sum quantity by region
+        result2 = 
+        
+        # TODO: Trigger actions
+        
+    
+    end_time = time.time()
+    return end_time - start_time
+
+def run_with_cache(spark, input_file):
+    """
+    Run iterative operations WITH caching.
+    
+    Args:
+        spark: SparkSession
+        input_file: Path to data
+    
+    Returns:
+        Execution time in seconds
+    """
+    start_time = time.time()
+    
+    # TODO: Read the data
+    df = 
+    
+    # TODO: Cache the DataFrame
+    
+    
+    # Simulate iterative operations (3 iterations)
+    for i in range(3):
+        # TODO: Same aggregations as above
+        result1 = 
+        result2 = 
+        
+    
+    # TODO: Unpersist when done
+    
+    
+    end_time = time.time()
+    return end_time - start_time
+
+def run_with_persist(spark, input_file):
+    """
+    Run with MEMORY_AND_DISK persistence level.
+    
+    Args:
+        spark: SparkSession
+        input_file: Path to data
+    
+    Returns:
+        Execution time in seconds
+    """
+    from pyspark import StorageLevel
+    
+    start_time = time.time()
+    
+    # TODO: Read and persist with MEMORY_AND_DISK
+    df = 
+    
+    
+    for i in range(3):
+        result1 = 
+        result2 = 
+        
+    
+    
+    
+    end_time = time.time()
+    return end_time - start_time
+
+def main():
+    spark = create_spark_session()
+    input_file = "sales_data.json"
+    
+    print("Caching Strategy | Execution Time (s)")
+    print("-" * 45)
+    
+    # TODO: Run all three scenarios and compare
+    time_no_cache = 
+    print(f"No Cache         | {time_no_cache:.2f}")
+    
+    time_cache = 
+    print(f"With Cache       | {time_cache:.2f}")
+    
+    time_persist = 
+    print(f"Persist (M&D)    | {time_persist:.2f}")
+    
+    # Calculate improvement
+    improvement = ((time_no_cache - time_cache) / time_no_cache) * 100
+    print(f"\nPerformance improvement with cache: {improvement:.1f}%")
+    
+    spark.stop()
+
+if __name__ == '__main__':
+    main()
+Student Task: Complete the TODO sections to:
+
+Read data using spark.read.json()
+Apply .cache() method
+Use .persist(StorageLevel.MEMORY_AND_DISK)
+Perform aggregations with .groupBy() and .agg()
+Trigger with .count() or .collect()
+Call .unpersist() to release memory
+Step 2: Execute and Compare
+python3 caching_benchmark.py
+Analysis Questions:
+
+How much faster is caching for iterative operations?
+When would you use MEMORY_AND_DISK vs MEMORY_ONLY?
+What's the trade-off of caching?
+Verification
+Check Partition Tuning Results
+Verify output shows performance variation:
+
+Different partition counts should show different execution times
+Optimal count typically near CPU core count × 2-4
+Check Spark UI (if accessible):
+
+# Access at http://localhost:4040 during job execution
+Check Caching Results
+Verify performance improvement:
+
+Cached version should be significantly faster (30-70% improvement)
+First iteration may be slower (cache population)
+Confirm cache usage:
+
+Check Spark UI Storage tab
+Verify memory usage increased during cached execution
+Additional Verification
+Create a verification script:
+
+nano verify_results.py
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("Verify").master("local[*]").getOrCreate()
+
+# Verify data exists
+df = spark.read.json("sales_data.json")
+print(f"Total records: {df.count()}")
+print(f"Default partitions: {df.rdd.getNumPartitions()}")
+
+# Show sample
+df.show(5)
+
+spark.stop()
+Run verification:
+
+python3 verify_results.py
+Troubleshooting Tips
+Issue: Out of Memory Errors
+
+Reduce dataset size in generate_data.py
+Increase driver memory: .config("spark.driver.memory", "4g")
+Issue: Slow Performance
+
+Check available CPU cores: nproc
+Adjust partition count based on cores
+Ensure no other heavy processes running
+Issue: Spark UI Not Accessible
+
+UI only available during job execution
+Run longer jobs or add input() pause in code
+Issue: Import Errors
+
+Verify PySpark installation: pip3 show pyspark
+Check Python version: python3 --version
+Conclusion
+In this lab, you:
+
+Optimized Spark jobs by tuning partition counts for your hardware
+Implemented caching strategies to accelerate iterative computations
+Benchmarked performance across different configurations
+Analyzed trade-offs between memory usage and execution speed
+Key Takeaways:
+
+Optimal partition count depends on cluster size and data volume (rule of thumb: 2-4× CPU cores)
+Caching dramatically improves performance for reused datasets but consumes memory
+Always benchmark with realistic data volumes
+Monitor Spark UI to identify bottlenecks
+Next Steps:
+
+Experiment with different storage levels (MEMORY_ONLY, DISK_ONLY)
+Try broadcast joins for small lookup tables
+Explore dynamic partition pruning
+Profile more complex transformations
+Performance tuning is iterative—measure, a
