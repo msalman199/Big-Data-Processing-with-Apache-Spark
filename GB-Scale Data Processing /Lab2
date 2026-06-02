@@ -1,0 +1,357 @@
+GB-Scale Data Processing with Apache Spark
+Prerequisites
+Basic Linux command-line skills
+Understanding of Python programming fundamentals
+Familiarity with data processing concepts (filtering, aggregation, joins)
+Basic knowledge of distributed computing principles
+Learning Objectives
+By completing this lab, you will:
+
+Install and configure Apache Spark on a single Linux machine
+Load and process large datasets using Spark DataFrames
+Apply transformations and actions on GB-scale data
+Optimize Spark jobs for performance
+Save processed results in various formats
+Environment Setup
+Install Java Development Kit
+sudo apt update
+sudo apt install -y openjdk-11-jdk
+java -version
+Install Apache Spark
+cd ~
+wget https://archive.apache.org/dist/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz
+tar -xzf spark-3.4.1-bin-hadoop3.tgz
+sudo mv spark-3.4.1-bin-hadoop3 /opt/spark
+Configure Environment Variables
+echo 'export SPARK_HOME=/opt/spark' >> ~/.bashrc
+echo 'export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin' >> ~/.bashrc
+echo 'export PYSPARK_PYTHON=python3' >> ~/.bashrc
+source ~/.bashrc
+Verify Installation
+spark-submit --version
+pyspark --version
+Install Python Dependencies
+sudo apt install -y python3-pip
+pip3 install pyspark pandas
+Task 1: Generate and Load Large Dataset
+Step 1: Create Sample Data Generator
+Create a Python script to generate a large dataset simulating e-commerce transactions:
+
+nano generate_data.py
+Add the following starter code:
+
+import csv
+import random
+from datetime import datetime, timedelta
+
+def generate_transactions(num_records, output_file):
+    """
+    Generate synthetic e-commerce transaction data.
+    
+    Args:
+        num_records: Number of transaction records to generate
+        output_file: Path to output CSV file
+    """
+    categories = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports']
+    countries = ['USA', 'UK', 'Canada', 'Germany', 'France', 'Japan']
+    
+    # TODO: Open CSV file and create writer
+    # TODO: Write header row: transaction_id, date, customer_id, product_category, amount, country
+    # TODO: Generate num_records transactions with random data
+    # Hint: Use random.randint() for IDs, random.choice() for categories
+    # Hint: Generate dates within the last 365 days
+    # Hint: Generate amounts between 10 and 1000
+    
+    pass
+
+if __name__ == "__main__":
+    # Generate 5 million records (~500MB)
+    generate_transactions(5000000, "transactions.csv")
+    print("Data generation complete")
+Your Task: Complete the function to generate the CSV file with realistic transaction data.
+
+Step 2: Run Data Generator
+python3 generate_data.py
+Verify the file size:
+
+ls -lh transactions.csv
+du -h transactions.csv
+Step 3: Create Spark Processing Script
+Create the main processing script:
+
+nano process_data.py
+Add this template:
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, sum, avg, count, year, month, round
+
+def create_spark_session():
+    """
+    Create and configure Spark session for local processing.
+    
+    Returns:
+        SparkSession object
+    """
+    # TODO: Create SparkSession with app name "GB-Scale Processing"
+    # TODO: Configure master as "local[*]" to use all cores
+    # TODO: Set spark.driver.memory to "4g"
+    # TODO: Set spark.sql.shuffle.partitions to "8"
+    
+    pass
+
+def load_data(spark, file_path):
+    """
+    Load CSV data into Spark DataFrame.
+    
+    Args:
+        spark: SparkSession object
+        file_path: Path to CSV file
+    
+    Returns:
+        DataFrame with loaded data
+    """
+    # TODO: Read CSV with header=True and inferSchema=True
+    # TODO: Return the DataFrame
+    
+    pass
+
+def main():
+    # Initialize Spark
+    spark = create_spark_session()
+    
+    # Load data
+    df = load_data(spark, "transactions.csv")
+    
+    # TODO: Print schema
+    # TODO: Show first 10 rows
+    # TODO: Print total record count
+    
+    spark.stop()
+
+if __name__ == "__main__":
+    main()
+Your Task: Complete the functions to create a Spark session and load the data.
+
+Step 4: Test Data Loading
+python3 process_data.py
+Expected output should show schema, sample rows, and record count.
+
+Task 2: Perform Data Transformations and Analysis
+Step 1: Add Transformation Functions
+Add these function templates to process_data.py:
+
+def clean_data(df):
+    """
+    Clean the dataset by removing nulls and filtering invalid records.
+    
+    Args:
+        df: Input DataFrame
+    
+    Returns:
+        Cleaned DataFrame
+    """
+    # TODO: Drop rows with any null values
+    # TODO: Filter transactions where amount > 0
+    # TODO: Return cleaned DataFrame
+    
+    pass
+
+def calculate_country_metrics(df):
+    """
+    Calculate aggregated metrics by country.
+    
+    Args:
+        df: Input DataFrame
+    
+    Returns:
+        DataFrame with country-level metrics
+    """
+    # TODO: Group by country
+    # TODO: Calculate: total_transactions, total_revenue, avg_transaction_value
+    # TODO: Round avg_transaction_value to 2 decimal places
+    # TODO: Order by total_revenue descending
+    
+    pass
+
+def calculate_category_trends(df):
+    """
+    Calculate monthly trends by product category.
+    
+    Args:
+        df: Input DataFrame
+    
+    Returns:
+        DataFrame with category trends
+    """
+    # TODO: Extract year and month from date column
+    # TODO: Group by product_category, year, month
+    # TODO: Calculate total_sales and transaction_count
+    # TODO: Order by year, month, total_sales descending
+    
+    pass
+
+def find_top_customers(df, top_n=100):
+    """
+    Identify top customers by total spending.
+    
+    Args:
+        df: Input DataFrame
+        top_n: Number of top customers to return
+    
+    Returns:
+        DataFrame with top customers
+    """
+    # TODO: Group by customer_id
+    # TODO: Calculate total_spent and purchase_count
+    # TODO: Order by total_spent descending
+    # TODO: Limit to top_n records
+    
+    pass
+Step 2: Update Main Function
+Update the main() function:
+
+def main():
+    spark = create_spark_session()
+    
+    # Load and clean data
+    print("Loading data...")
+    df = load_data(spark, "transactions.csv")
+    df.printSchema()
+    print(f"Total records loaded: {df.count()}")
+    
+    print("\nCleaning data...")
+    clean_df = clean_data(df)
+    print(f"Records after cleaning: {clean_df.count()}")
+    
+    # Perform analyses
+    print("\nCalculating country metrics...")
+    country_metrics = calculate_country_metrics(clean_df)
+    # TODO: Show top 10 countries
+    # TODO: Write results to CSV in "output/country_metrics"
+    
+    print("\nCalculating category trends...")
+    category_trends = calculate_category_trends(clean_df)
+    # TODO: Show first 20 rows
+    # TODO: Write results to Parquet in "output/category_trends"
+    
+    print("\nFinding top customers...")
+    top_customers = find_top_customers(clean_df, 100)
+    # TODO: Show all top customers
+    # TODO: Write results to JSON in "output/top_customers"
+    
+    spark.stop()
+    print("\nProcessing complete!")
+Step 3: Run Complete Processing Pipeline
+python3 process_data.py
+Step 4: Add Performance Optimization
+Create an optimized version:
+
+nano process_data_optimized.py
+Add caching and partitioning:
+
+def main():
+    spark = create_spark_session()
+    
+    df = load_data(spark, "transactions.csv")
+    clean_df = clean_data(df)
+    
+    # TODO: Cache the cleaned DataFrame for reuse
+    # Hint: Use .cache() method
+    
+    # TODO: Repartition by country for better parallelism
+    # Hint: Use .repartition() method
+    
+    # Perform all analyses on cached/repartitioned data
+    country_metrics = calculate_country_metrics(clean_df)
+    category_trends = calculate_category_trends(clean_df)
+    top_customers = find_top_customers(clean_df, 100)
+    
+    # Save results
+    # TODO: Implement saving logic with appropriate formats
+    
+    spark.stop()
+Verification
+Verify Output Files
+# Check output directory structure
+ls -R output/
+
+# Verify country metrics
+head -20 output/country_metrics/part-*.csv
+
+# Check Parquet files
+ls -lh output/category_trends/
+
+# Verify JSON output
+head -10 output/top_customers/part-*.json
+Verify Data Quality
+Create a verification script:
+
+nano verify_results.py
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("Verify").master("local[*]").getOrCreate()
+
+# TODO: Read each output format
+# TODO: Print record counts
+# TODO: Show sample data from each output
+
+# Verify country metrics
+country_df = spark.read.csv("output/country_metrics", header=True)
+print(f"Country metrics records: {country_df.count()}")
+
+# TODO: Add verification for other outputs
+
+spark.stop()
+Performance Metrics
+Check Spark UI (if running):
+
+# Access at http://localhost:4040 during job execution
+Compare execution times:
+
+time python3 process_data.py
+time python3 process_data_optimized.py
+Troubleshooting Tips
+Out of Memory Errors:
+
+Reduce spark.driver.memory to 2g if system has limited RAM
+Decrease dataset size in generator (e.g., 1 million records)
+Increase spark.sql.shuffle.partitions to 16
+Slow Performance:
+
+Ensure caching is implemented for reused DataFrames
+Check partition count matches available CPU cores
+Use explain() method to view query plans
+File Not Found Errors:
+
+Verify CSV file was generated successfully
+Check file paths are relative to script location
+Ensure output directories are created automatically
+Java Heap Space Errors:
+
+export SPARK_DRIVER_MEMORY=2g
+export SPARK_EXECUTOR_MEMORY=2g
+Expected Outcomes
+Upon completion, you should have:
+
+Generated Dataset: 5 million transaction records (~500MB CSV file)
+Processed Outputs:
+Country-level metrics in CSV format
+Monthly category trends in Parquet format
+Top 100 customers in JSON format
+Performance Understanding: Experience with caching and partitioning strategies
+Skills Gained:
+Loading large datasets into Spark
+Applying transformations (filter, groupBy, aggregate)
+Writing results in multiple formats
+Basic Spark optimization techniques
+Conclusion
+You have successfully processed GB-scale data using Apache Spark on a single machine. You learned to:
+
+Configure Spark for local processing with appropriate memory settings
+Load and clean large CSV datasets efficiently
+Perform complex aggregations and transformations on millions of records
+Optimize Spark jobs using caching and partitioning
+Export results in multiple formats (CSV, Parquet, JSON)
+These skills form the foundation for working with distributed data processing systems. Spark's ability to handle large datasets on a single machine demonstrates its efficiency, while the same code can scale to multi-node clusters for even larger workloads.
+
+Next Steps: Explore Spark SQL for more complex queries, experiment with different file formats (Avro, ORC), or investigate Spark's machine learning library (MLlib) for predictive analytics on large datasets.
