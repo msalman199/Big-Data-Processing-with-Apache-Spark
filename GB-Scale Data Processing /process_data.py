@@ -113,3 +113,34 @@ def find_top_customers(df, top_n=100):
     # TODO: Limit to top_n records
     
     pass
+def main():
+    spark = create_spark_session()
+    
+    # Load and clean data
+    print("Loading data...")
+    df = load_data(spark, "transactions.csv")
+    df.printSchema()
+    print(f"Total records loaded: {df.count()}")
+    
+    print("\nCleaning data...")
+    clean_df = clean_data(df)
+    print(f"Records after cleaning: {clean_df.count()}")
+    
+    # Perform analyses
+    print("\nCalculating country metrics...")
+    country_metrics = calculate_country_metrics(clean_df)
+    # TODO: Show top 10 countries
+    # TODO: Write results to CSV in "output/country_metrics"
+    
+    print("\nCalculating category trends...")
+    category_trends = calculate_category_trends(clean_df)
+    # TODO: Show first 20 rows
+    # TODO: Write results to Parquet in "output/category_trends"
+    
+    print("\nFinding top customers...")
+    top_customers = find_top_customers(clean_df, 100)
+    # TODO: Show all top customers
+    # TODO: Write results to JSON in "output/top_customers"
+    
+    spark.stop()
+    print("\nProcessing complete!")
