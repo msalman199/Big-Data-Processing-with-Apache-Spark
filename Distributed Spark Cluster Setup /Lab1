@@ -1,0 +1,248 @@
+Distributed Spark Cluster Setup
+Prerequisites
+Basic Linux command-line knowledge
+Understanding of distributed computing concepts
+Familiarity with Java/Scala basics
+SSH and networking fundamentals
+Learning Objectives
+By completing this lab, you will:
+
+Install and configure Apache Spark in distributed mode
+Set up a master-worker cluster architecture on a single machine
+Configure Spark cluster communication
+Submit and monitor distributed Spark jobs
+Verify cluster functionality through test applications
+Environment Setup
+System Requirements
+Linux machine (Ubuntu 20.04+ or CentOS 7+)
+Minimum 4GB RAM
+Java 8 or 11 installed
+Root or sudo access
+Initial Setup
+Verify Java Installation
+java -version
+If Java is not installed:
+
+sudo apt update
+sudo apt install openjdk-11-jdk -y
+Set Environment Variables
+echo 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64' >> ~/.bashrc
+source ~/.bashrc
+Task 1: Install and Configure Apache Spark
+Step 1: Download Spark
+cd ~
+wget https://archive.apache.org/dist/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz
+tar -xzf spark-3.4.1-bin-hadoop3.tgz
+sudo mv spark-3.4.1-bin-hadoop3 /opt/spark
+Step 2: Configure Environment Variables
+cat >> ~/.bashrc << 'EOF'
+export SPARK_HOME=/opt/spark
+export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+export PYSPARK_PYTHON=python3
+EOF
+
+source ~/.bashrc
+Step 3: Configure Spark Properties
+Create the Spark configuration file:
+
+cd $SPARK_HOME/conf
+cp spark-env.sh.template spark-env.sh
+Edit spark-env.sh and add:
+
+cat >> spark-env.sh << 'EOF'
+export SPARK_MASTER_HOST=localhost
+export SPARK_MASTER_PORT=7077
+export SPARK_WORKER_CORES=2
+export SPARK_WORKER_MEMORY=2g
+export SPARK_WORKER_INSTANCES=2
+EOF
+Step 4: Configure Spark Defaults
+cp spark-defaults.conf.template spark-defaults.conf
+Add these configurations to spark-defaults.conf:
+
+spark.master                     spark://localhost:7077
+spark.executor.memory            1g
+spark.driver.memory              1g
+spark.executor.cores             1
+Task 2: Start and Configure the Spark Cluster
+Step 1: Start the Spark Master
+$SPARK_HOME/sbin/start-master.sh
+Verify the master is running:
+
+jps | grep Master
+Access the Master Web UI at: http://localhost:8080
+
+Step 2: Start Spark Workers
+Start two worker instances:
+
+$SPARK_HOME/sbin/start-worker.sh spark://localhost:7077
+sleep 5
+$SPARK_HOME/sbin/start-worker.sh spark://localhost:7077
+Verify workers are running:
+
+jps | grep Worker
+Check the Web UI to confirm both workers are registered.
+
+Step 3: Create a Test Spark Application
+Create a directory for your application:
+
+mkdir -p ~/spark-apps
+cd ~/spark-apps
+Create a Python test script wordcount.py:
+
+from pyspark.sql import SparkSession
+
+def create_spark_session():
+    """
+    TODO: Create and return a SparkSession with app name "WordCount"
+    Use master URL: spark://localhost:7077
+    """
+    # Your code here
+    pass
+
+def perform_wordcount(spark, text_data):
+    """
+    TODO: Implement word count logic
+    
+    Steps:
+    1. Create RDD from text_data list
+    2. Split each line into words
+    3. Map each word to (word, 1)
+    4. Reduce by key to count occurrences
+    5. Collect and return results
+    
+    Args:
+        spark: SparkSession object
+        text_data: List of text strings
+    
+    Returns:
+        List of tuples (word, count)
+    """
+    # Your code here
+    pass
+
+if __name__ == "__main__":
+    # Sample data
+    sample_text = [
+        "Apache Spark is a distributed computing framework",
+        "Spark provides high-level APIs in Java Scala Python",
+        "Distributed computing enables processing large datasets"
+    ]
+    
+    # TODO: Call create_spark_session()
+    # TODO: Call perform_wordcount()
+    # TODO: Print results
+    # TODO: Stop the Spark session
+    
+    pass
+Step 4: Create a Scala Test Application (Alternative)
+Create WordCount.scala:
+
+import org.apache.spark.sql.SparkSession
+
+object WordCount {
+  def main(args: Array[String]): Unit = {
+    // TODO: Create SparkSession with master URL spark://localhost:7077
+    
+    // TODO: Create sample data RDD
+    val textData = Seq(
+      "Apache Spark is a distributed computing framework",
+      "Spark provides high-level APIs in Java Scala Python"
+    )
+    
+    // TODO: Implement word count logic:
+    // 1. Create RDD from textData
+    // 2. flatMap to split into words
+    // 3. map to (word, 1) pairs
+    // 4. reduceByKey to count
+    // 5. collect and print results
+    
+    // TODO: Stop Spark session
+  }
+}
+Step 5: Submit the Application
+For Python:
+
+spark-submit \
+  --master spark://localhost:7077 \
+  --executor-memory 1g \
+  --total-executor-cores 2 \
+  wordcount.py
+Monitor the job execution in the Web UI at http://localhost:8080
+
+Step 6: Test with Spark Shell
+Launch the Spark shell connected to your cluster:
+
+spark-shell --master spark://localhost:7077
+Run a quick test in the shell:
+
+val data = sc.parallelize(1 to 1000)
+val result = data.map(x => x * 2).reduce(_ + _)
+println(s"Result: $result")
+Exit the shell:
+
+:quit
+Verification
+Check Cluster Status
+Verify all processes are running:
+jps
+Expected output should include:
+
+Master
+Worker (multiple instances)
+Check Master Web UI:
+Navigate to http://localhost:8080
+Verify: 2 workers are alive
+Check available cores and memory
+Check Worker Logs:
+ls $SPARK_HOME/logs/
+tail -f $SPARK_HOME/logs/spark-*-worker-*.out
+Test Cluster Connectivity:
+spark-submit --master spark://localhost:7077 \
+  --class org.apache.spark.examples.SparkPi \
+  $SPARK_HOME/examples/jars/spark-examples*.jar 100
+Expected: Pi calculation result displayed
+
+Troubleshooting
+Workers not connecting:
+
+Check firewall: sudo ufw status
+Verify master URL in worker logs
+Ensure ports 7077, 8080, 8081 are available
+Out of Memory errors:
+
+Reduce SPARK_WORKER_MEMORY in spark-env.sh
+Decrease spark.executor.memory in application
+Port conflicts:
+
+netstat -tulpn | grep -E '7077|8080|8081'
+Cleanup
+Stop the cluster:
+
+$SPARK_HOME/sbin/stop-worker.sh
+$SPARK_HOME/sbin/stop-master.sh
+Verify all processes stopped:
+
+jps
+Conclusion
+You have successfully:
+
+Installed Apache Spark in distributed mode
+Configured a master-worker cluster architecture
+Started and managed Spark cluster services
+Submitted and executed distributed applications
+Monitored cluster performance through Web UI
+This setup simulates a production Spark cluster on a single machine, providing hands-on experience with distributed computing concepts. In production environments, master and workers run on separate physical machines, but the configuration principles remain the same.
+
+Key Takeaways:
+
+Spark's master-worker architecture enables distributed processing
+Configuration files control cluster behavior and resource allocation
+The Web UI provides real-time monitoring and debugging capabilities
+Applications can be submitted in multiple languages (Python, Scala, Java)
+Next Steps:
+
+Explore Spark SQL and DataFrames
+Implement more complex distributed algorithms
+Configure cluster for high availability
+Integrate with distributed storage systems (HDFS alternatives)
