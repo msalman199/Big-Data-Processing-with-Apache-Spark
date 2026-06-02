@@ -46,3 +46,70 @@ def main():
 
 if __name__ == "__main__":
     main()
+def clean_data(df):
+    """
+    Clean the dataset by removing nulls and filtering invalid records.
+    
+    Args:
+        df: Input DataFrame
+    
+    Returns:
+        Cleaned DataFrame
+    """
+    # TODO: Drop rows with any null values
+    # TODO: Filter transactions where amount > 0
+    # TODO: Return cleaned DataFrame
+    
+    pass
+
+def calculate_country_metrics(df):
+    """
+    Calculate aggregated metrics by country.
+    
+    Args:
+        df: Input DataFrame
+    
+    Returns:
+        DataFrame with country-level metrics
+    """
+    # TODO: Group by country
+    # TODO: Calculate: total_transactions, total_revenue, avg_transaction_value
+    # TODO: Round avg_transaction_value to 2 decimal places
+    # TODO: Order by total_revenue descending
+    
+    pass
+
+def calculate_category_trends(df):
+    """
+    Calculate monthly trends by product category.
+    
+    Args:
+        df: Input DataFrame
+    
+    Returns:
+        DataFrame with category trends
+    """
+    # TODO: Extract year and month from date column
+    # TODO: Group by product_category, year, month
+    # TODO: Calculate total_sales and transaction_count
+    # TODO: Order by year, month, total_sales descending
+    
+    pass
+
+def find_top_customers(df, top_n=100):
+    """
+    Identify top customers by total spending.
+    
+    Args:
+        df: Input DataFrame
+        top_n: Number of top customers to return
+    
+    Returns:
+        DataFrame with top customers
+    """
+    # TODO: Group by customer_id
+    # TODO: Calculate total_spent and purchase_count
+    # TODO: Order by total_spent descending
+    # TODO: Limit to top_n records
+    
+    pass
